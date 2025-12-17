@@ -18,7 +18,7 @@ function Dialog({ open, onOpenChange, children }: { open: boolean; onOpenChange:
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
-      <div className="bg-gray-900 rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-gray-800">
+      <div className="bg-gray-900 rounded-2xl p-4 md:p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-gray-800 my-4">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">AI Prompt Extractor</h2>
           <button
@@ -101,6 +101,18 @@ export default function Home() {
     e.preventDefault();
   }, []);
 
+  // 移动端文件选择处理
+  const handleMobileFileSelect = useCallback(() => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) handleFile(file);
+    };
+    input.click();
+  }, [handleFile]);
+
   const handleCopy = useCallback(async () => {
     if (!prompt) return;
     try {
@@ -166,7 +178,14 @@ export default function Home() {
           <div className="flex justify-center mb-16">
             <button
               onClick={() => setIsDialogOpen(true)}
-              className="group inline-flex items-center gap-3 px-8 py-4 bg-white text-black font-semibold rounded-full hover:scale-105 transition-all duration-200 text-lg shadow-lg"
+              onTouchStart={(e) => {
+                e.currentTarget.style.transform = 'scale(0.95)';
+              }}
+              onTouchEnd={(e) => {
+                e.currentTarget.style.transform = 'scale(1.05)';
+                setIsDialogOpen(true);
+              }}
+              className="group inline-flex items-center gap-3 px-8 py-4 bg-white text-black font-semibold rounded-full hover:scale-105 active:scale-95 transition-all duration-200 text-lg shadow-lg touch-manipulation"
             >
               <Zap size={20} />
               免费体验
@@ -241,22 +260,25 @@ export default function Home() {
             <div
               onDrop={handleDrop}
               onDragOver={handleDragOver}
-              onClick={() => {
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.accept = 'image/*';
-                input.onchange = (e) => {
-                  const file = (e.target as HTMLInputElement).files?.[0];
-                  if (file) handleFile(file);
-                };
-                input.click();
+              onClick={handleMobileFileSelect}
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                handleMobileFileSelect();
+              }}
+              role="button"
+              tabIndex={0}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  handleMobileFileSelect();
+                }
               }}
               className={`
                 relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all
                 ${isLoading
-                  ? 'border-blue-500 bg-blue-500/10 opacity-50'
-                  : 'border-gray-700 bg-gray-800/30 hover:border-gray-600'
+                  ? 'border-blue-500 bg-blue-500/10 opacity-50 pointer-events-none'
+                  : 'border-gray-700 bg-gray-800/30 hover:border-gray-600 active:border-blue-500'
                 }
+                touch-manipulation
               `}
             >
               {imageBase64 ? (
